@@ -534,10 +534,9 @@
                 }
             }
 
-            const owner = 'commanderzico';
             const repo = 'sig-catalog';
-            const branch = 'main';
-            const audioUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${sig.audio_path}`;
+            // Use GitHub Pages URL + encodeURI for reliable audio serving (raw.githubusercontent can be flaky with Korean filenames)
+            const audioUrl = `https://commanderzico.github.io/${repo}/${encodeURI(sig.audio_path)}`;
             currentAudio = new Audio(audioUrl);
             currentAudioBtn = buttonElement;
 
@@ -552,8 +551,8 @@
                 icon.classList.remove('fa-play');
                 icon.classList.add('fa-pause');
             }).catch(err => {
-                console.error("Audio play failed:", err);
-                alert("오디오 재생에 실패했습니다. 파일이 올바른 위치에 있는지 확인하세요.");
+                console.error("Audio play failed for:", audioUrl, err);
+                alert(`오디오 재생에 실패했습니다.\n파일: ${sig.audio_path}\n\nGitHub Pages 배포가 아직 안 됐거나, 브라우저가 미디어 로딩을 차단했을 수 있습니다.\n하드 리프레시(Cmd/Ctrl+Shift+R) 후 다시 시도해보세요.`);
             });
 
             currentAudio.onended = () => {
