@@ -231,7 +231,10 @@
                         ${sig.primary_audio_name ? `<div class="text-[10px] text-zinc-400 truncate max-w-[210px]">${sig.primary_audio_name}</div>` : ''}
                     </td>
                     <td class="px-6 py-4">
-                        <div class="font-medium">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
+                        <div class="flex items-center gap-3">
+                            ${hasImage ? `<img src="images/${sig.image_name}" class="w-14 h-9 object-cover rounded border border-zinc-700 flex-shrink-0 cursor-pointer hover:opacity-80" onclick="event.stopImmediatePropagation(); showImage(${sig.id})" loading="lazy" alt="${sig.image_title || ''}">` : ''}
+                            <div class="font-medium">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
+                        </div>
                     </td>
                     <td class="px-6 py-4 text-center">
                         ${periodBadge}
