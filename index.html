@@ -114,6 +114,7 @@
                     <thead class="bg-zinc-950 text-zinc-400">
                         <tr>
                             <th class="px-6 py-4 text-left font-medium w-20">단가</th>
+                            <th class="px-6 py-4 text-center font-medium w-20">미리보기</th>
                             <th class="px-6 py-4 text-left font-medium">음원 제목</th>
                             <th class="px-6 py-4 text-left font-medium">이미지 제목</th>
                             <th class="px-6 py-4 text-center font-medium w-28">시기</th>
@@ -207,7 +208,7 @@
             tbody.innerHTML = '';
 
             if (filteredSigs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-zinc-500">검색 결과가 없습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-zinc-500">검색 결과가 없습니다.</td></tr>`;
                 return;
             }
 
@@ -226,15 +227,21 @@
                     <td class="px-6 py-4">
                         <div class="font-mono text-base font-semibold text-emerald-400">${sig.id}</div>
                     </td>
+                    <td class="px-4 py-4 text-center">
+                        ${hasImage ? `
+                            <img src="images/${sig.image_name}" 
+                                 class="w-16 h-10 object-cover rounded border border-zinc-700 cursor-pointer hover:opacity-80 mx-auto" 
+                                 onclick="event.stopImmediatePropagation(); showImage(${sig.id})" 
+                                 loading="lazy" 
+                                 alt="${sig.image_title || ''}">
+                        ` : '<span class="text-zinc-500 text-xs">—</span>'}
+                    </td>
                     <td class="px-6 py-4">
                         <div class="font-medium">${sig.audio_title || '<span class="text-zinc-500">—</span>'}</div>
                         ${sig.primary_audio_name ? `<div class="text-[10px] text-zinc-400 truncate max-w-[210px]">${sig.primary_audio_name}</div>` : ''}
                     </td>
                     <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            ${hasImage ? `<img src="images/${sig.image_name}" class="w-14 h-9 object-cover rounded border border-zinc-700 flex-shrink-0 cursor-pointer hover:opacity-80" onclick="event.stopImmediatePropagation(); showImage(${sig.id})" loading="lazy" alt="${sig.image_title || ''}">` : ''}
-                            <div class="font-medium">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
-                        </div>
+                        <div class="font-medium">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
                     </td>
                     <td class="px-6 py-4 text-center">
                         ${periodBadge}
