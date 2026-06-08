@@ -342,7 +342,11 @@
                 }
             }
 
-            currentAudio = new Audio(`${sig.audio_path}`);
+            const owner = 'commanderzico';
+            const repo = 'sig-catalog';
+            const branch = 'main';
+            const audioUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${sig.audio_path}`;
+            currentAudio = new Audio(audioUrl);
             currentAudioBtn = buttonElement;
 
             titleEl.textContent = sig.audio_title || sig.primary_audio_name;
