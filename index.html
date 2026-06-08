@@ -72,6 +72,11 @@
             font-feature-settings: "tnum";
             letter-spacing: -1.5px;
         }
+
+        .active-view {
+            background-color: #3f3f46;
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200">
@@ -84,7 +89,21 @@
         </div>
 
         <!-- Controls -->
-        <div class="flex flex-col md:flex-row gap-3 mb-6">
+        <div class="flex flex-col md:flex-row gap-3 mb-6 items-center">
+            <!-- View Toggle -->
+            <div class="flex bg-zinc-900 border border-zinc-800 rounded-3xl p-1 text-sm">
+                <button id="view-gallery-btn" onclick="setView('gallery')" 
+                        class="px-3 py-1.5 rounded-2xl flex items-center gap-1.5 bg-zinc-700 text-white active-view">
+                    <i class="fa-solid fa-th-large"></i>
+                    <span class="hidden sm:inline">갤러리</span>
+                </button>
+                <button id="view-table-btn" onclick="setView('table')" 
+                        class="px-3 py-1.5 rounded-2xl flex items-center gap-1.5">
+                    <i class="fa-solid fa-list"></i>
+                    <span class="hidden sm:inline">테이블</span>
+                </button>
+            </div>
+
             <div class="flex-1 relative">
                 <input id="search" 
                        type="text" 
@@ -116,8 +135,33 @@
         </div>
 
         <!-- Gallery Grid -->
-        <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
-            <!-- Populated by JS as cards -->
+        <div id="gallery-view" class="">
+            <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+                <!-- Populated by JS as cards -->
+            </div>
+        </div>
+
+        <!-- Table View -->
+        <div id="table-view" class="hidden">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-zinc-950 text-zinc-400">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium w-16">단가</th>
+                                <th class="px-4 py-3 text-center font-medium w-20">시그이미지</th>
+                                <th class="px-4 py-3 text-center font-medium w-36">시그음원</th>
+                                <th class="px-4 py-3 text-center font-medium w-24">시기</th>
+                                <th class="px-4 py-3 text-left font-medium">음원 제목</th>
+                                <th class="px-4 py-3 text-left font-medium">이미지 제목</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-zinc-800">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <div class="mt-4 text-xs text-zinc-500 flex justify-between items-center px-1">
@@ -173,6 +217,7 @@
     <script>
         let sigs = [];
         let currentFilteredSigs = [];
+        let currentView = 'gallery'; // 'gallery' or 'table'
         let currentAudio = null;
         let currentAudioBtn = null;
 
@@ -188,7 +233,7 @@
                 sigs.sort((a, b) => b.id - a.id);
                 
                 currentFilteredSigs = sigs;
-                renderGallery(sigs);
+                setView(currentView);
                 document.getElementById('total-count').textContent = sigs.length.toLocaleString();
             } catch (e) {
                 console.error(e);
@@ -280,6 +325,72 @@
             document.getElementById('result-count').textContent = `${filteredSigs.length} / ${sigs.length}`;
         }
 
+        function renderTable(filteredSigs) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (filteredSigs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-zinc-500">검색 결과가 없습니다.</td></tr>`;
+                return;
+            }
+
+            filteredSigs.forEach(sig => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-zinc-800/60 transition-colors';
+
+                const hasAudio = sig.primary_audio_name && sig.audio_path;
+                const hasImage = sig.image_name;
+
+                const periodBadge = sig.period 
+                    ? `<span class="inline-flex items-center px-2.5 py-px rounded-full text-[10px] font-medium ${sig.period.includes('5월') || sig.period.includes('6월') ? 'bg-orange-500/20 text-orange-400' : 'bg-zinc-700 text-zinc-300'}">${sig.period}</span>`
+                    : '';
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3">
+                        <div class="font-mono text-sm font-semibold text-emerald-400">${sig.id}</div>
+                    </td>
+                    <td class="px-3 py-3 text-center">
+                        ${hasImage ? `
+                            <img src="images/${sig.image_name}" 
+                                 class="w-10 h-7 object-contain rounded border border-zinc-700 cursor-pointer hover:opacity-80 mx-auto" 
+                                 onclick="showImage(${sig.id})" 
+                                 loading="lazy" 
+                                 alt="">
+                        ` : '<span class="text-[10px] text-zinc-500">—</span>'}
+                    </td>
+                    <td class="px-3 py-3">
+                        <div class="flex items-center gap-2">
+                            ${hasAudio ? `
+                                <button onclick="playAudio(${sig.id}, this)" 
+                                        class="flex items-center gap-1 px-2 py-1 text-[10px] rounded bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+                                    <i class="fa-solid fa-play text-[8px]"></i>
+                                    <span>재생</span>
+                                </button>
+                                <a href="${sig.audio_path}" download 
+                                   class="flex items-center gap-1 px-1.5 py-1 text-[10px] rounded bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                                   title="다운로드">
+                                    <i class="fa-solid fa-download text-[8px]"></i>
+                                </a>
+                            ` : ''}
+                        </div>
+                    </td>
+                    <td class="px-3 py-3 text-center">
+                        ${periodBadge}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm">${sig.audio_title || '<span class="text-zinc-500">—</span>'}</div>
+                        ${sig.primary_audio_name ? `<div class="text-[9px] text-zinc-400 truncate max-w-[140px]">${sig.primary_audio_name}</div>` : ''}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('result-count').textContent = `${filteredSigs.length} / ${sigs.length}`;
+        }
+
         function filterData() {
             const searchTerm = document.getElementById('search').value.toLowerCase().trim();
             const periodFilter = document.getElementById('period-filter').value;
@@ -302,14 +413,45 @@
             filtered.sort((a, b) => b.id - a.id);
 
             currentFilteredSigs = filtered;
-            renderGallery(filtered);
+            renderCurrentView();
         }
 
         function resetFilters() {
             document.getElementById('search').value = '';
             document.getElementById('period-filter').value = '';
             currentFilteredSigs = sigs;
-            renderGallery(sigs);
+            renderCurrentView();
+        }
+
+        function setView(view) {
+            currentView = view;
+            
+            const galleryView = document.getElementById('gallery-view');
+            const tableView = document.getElementById('table-view');
+            const btnGallery = document.getElementById('view-gallery-btn');
+            const btnTable = document.getElementById('view-table-btn');
+
+            if (view === 'gallery') {
+                galleryView.classList.remove('hidden');
+                tableView.classList.add('hidden');
+                btnGallery.classList.add('active-view', 'bg-zinc-700', 'text-white');
+                btnTable.classList.remove('active-view', 'bg-zinc-700', 'text-white');
+                renderGallery(currentFilteredSigs);
+            } else {
+                galleryView.classList.add('hidden');
+                tableView.classList.remove('hidden');
+                btnTable.classList.add('active-view', 'bg-zinc-700', 'text-white');
+                btnGallery.classList.remove('active-view', 'bg-zinc-700', 'text-white');
+                renderTable(currentFilteredSigs);
+            }
+        }
+
+        function renderCurrentView() {
+            if (currentView === 'gallery') {
+                renderGallery(currentFilteredSigs);
+            } else {
+                renderTable(currentFilteredSigs);
+            }
         }
 
         function downloadExcel() {
