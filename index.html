@@ -191,6 +191,9 @@
                 // Filter out completely empty entries
                 sigs = sigs.filter(s => s.audio_title || s.image_title);
                 
+                // Sort by 단가 descending (higher numbers first)
+                sigs.sort((a, b) => b.id - a.id);
+                
                 renderTable(sigs);
                 document.getElementById('total-count').textContent = sigs.length.toLocaleString();
             } catch (e) {
@@ -286,6 +289,9 @@
             if (periodFilter) {
                 filtered = filtered.filter(s => s.period && s.period.includes(periodFilter));
             }
+
+            // Keep sort by 단가 descending
+            filtered.sort((a, b) => b.id - a.id);
 
             renderTable(filtered);
         }
