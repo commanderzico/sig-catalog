@@ -114,11 +114,11 @@
                     <thead class="bg-zinc-950 text-zinc-400">
                         <tr>
                             <th class="px-6 py-4 text-left font-medium w-20">단가</th>
+                            <th class="px-6 py-4 text-center font-medium w-48">액션</th>
                             <th class="px-6 py-4 text-center font-medium w-20">시그이미지</th>
-                            <th class="px-6 py-4 text-left font-medium">음원 제목</th>
-                            <th class="px-6 py-4 text-left font-medium">이미지 제목</th>
                             <th class="px-6 py-4 text-center font-medium w-28">시기</th>
-                            <th class="px-6 py-4 text-center font-medium w-40">액션</th>
+                            <th class="px-6 py-4 text-left font-medium w-32">음원 제목</th>
+                            <th class="px-6 py-4 text-left font-medium w-32">이미지 제목</th>
                         </tr>
                     </thead>
                     <tbody id="table-body" class="divide-y divide-zinc-800">
@@ -227,6 +227,17 @@
                     <td class="px-6 py-4">
                         <div class="font-mono text-base font-semibold text-emerald-400">${sig.id}</div>
                     </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            ${hasAudio ? `
+                                <button onclick="playAudio(${sig.id}, this)" 
+                                        class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-2xl bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-medium">
+                                    <i class="fa-solid fa-play"></i>
+                                    <span>재생</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
                     <td class="px-4 py-4 text-center">
                         ${hasImage ? `
                             <img src="images/${sig.image_name}" 
@@ -236,26 +247,15 @@
                                  alt="${sig.image_title || ''}">
                         ` : '<span class="text-zinc-500 text-xs">—</span>'}
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium">${sig.audio_title || '<span class="text-zinc-500">—</span>'}</div>
-                        ${sig.primary_audio_name ? `<div class="text-[10px] text-zinc-400 truncate max-w-[210px]">${sig.primary_audio_name}</div>` : ''}
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
-                    </td>
                     <td class="px-6 py-4 text-center">
                         ${periodBadge}
                     </td>
                     <td class="px-6 py-4">
-                        <div class="flex items-center justify-center gap-2">
-                            ${hasAudio ? `
-                                <button onclick="playAudio(${sig.id}, this)" 
-                                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-2xl bg-emerald-600 hover:bg-emerald-500 transition-colors text-white">
-                                    <i class="fa-solid fa-play"></i>
-                                    <span>재생</span>
-                                </button>
-                            ` : ''}
-                        </div>
+                        <div class="font-medium text-sm">${sig.audio_title || '<span class="text-zinc-500">—</span>'}</div>
+                        ${sig.primary_audio_name ? `<div class="text-[10px] text-zinc-400 truncate max-w-[160px]">${sig.primary_audio_name}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-sm">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
                     </td>
                 `;
                 tbody.appendChild(tr);
