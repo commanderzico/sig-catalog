@@ -59,22 +59,28 @@
             object-fit: contain;
             border-radius: 8px;
         }
+
+        .sig-card {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .sig-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .sig-id {
+            font-feature-settings: "tnum";
+            letter-spacing: -1.5px;
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200">
     <div class="max-w-7xl mx-auto px-6 py-8">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-4xl font-bold tracking-tight">커맨더지코 방송국 시그니처 통합 카탈로그</h1>
-                <p class="text-zinc-400 mt-1">26.06.08</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="px-4 py-2 bg-zinc-900 rounded-2xl text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-database text-emerald-400"></i>
-                    <span id="total-count">0</span> 개의 시그
-                </div>
-            </div>
+        <div class="text-center mb-10">
+            <div class="text-2xl tracking-[4px] text-zinc-400 mb-1">✦ 커맨더지코 방송국 ✦</div>
+            <h1 class="text-5xl font-bold tracking-tight mb-2">광우상사 시그니처 컬렉션</h1>
+            <p class="text-sm text-zinc-400">NEW 시그 • 이미지 클릭으로 팝업 • 재생 버튼으로 음원 재생</p>
         </div>
 
         <!-- Controls -->
@@ -109,25 +115,9 @@
             </div>
         </div>
 
-        <!-- Table -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-zinc-950 text-zinc-400">
-                        <tr>
-                            <th class="px-6 py-4 text-left font-medium w-20">단가</th>
-                            <th class="px-6 py-4 text-center font-medium w-20">시그이미지</th>
-                            <th class="px-6 py-4 text-center font-medium w-48">시그음원</th>
-                            <th class="px-6 py-4 text-center font-medium w-28">시기</th>
-                            <th class="px-6 py-4 text-left font-medium w-32">음원 제목</th>
-                            <th class="px-6 py-4 text-left font-medium w-32">이미지 제목</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body" class="divide-y divide-zinc-800">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
+        <!-- Gallery Grid -->
+        <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+            <!-- Populated by JS as cards -->
         </div>
 
         <div class="mt-4 text-xs text-zinc-500 flex justify-between items-center px-1">
@@ -198,7 +188,7 @@
                 sigs.sort((a, b) => b.id - a.id);
                 
                 currentFilteredSigs = sigs;
-                renderTable(sigs);
+                renderGallery(sigs);
                 document.getElementById('total-count').textContent = sigs.length.toLocaleString();
             } catch (e) {
                 console.error(e);
@@ -210,68 +200,81 @@
             }
         }
 
-        function renderTable(filteredSigs) {
-            currentFilteredSigs = filteredSigs;
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = '';
+        function renderGallery(filteredSigs) {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
 
             if (filteredSigs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-zinc-500">검색 결과가 없습니다.</td></tr>`;
+                gallery.innerHTML = `<div class="col-span-full px-6 py-8 text-center text-zinc-500">검색 결과가 없습니다.</div>`;
                 return;
             }
 
             filteredSigs.forEach(sig => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-zinc-800/60 transition-colors';
+                const card = document.createElement('div');
+                card.className = 'sig-card bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex flex-col hover:border-zinc-600 transition-all';
 
                 const hasAudio = sig.primary_audio_name && sig.audio_path;
                 const hasImage = sig.image_name;
 
                 const periodBadge = sig.period 
-                    ? `<span class="inline-flex items-center px-2.5 py-px rounded-full text-[10px] font-medium ${sig.period.includes('5월') || sig.period.includes('6월') ? 'bg-orange-500/20 text-orange-400' : 'bg-zinc-700 text-zinc-300'}">${sig.period}</span>`
+                    ? `<span class="inline-block px-2 py-0.5 text-[10px] rounded bg-zinc-800 text-zinc-400">${sig.period}</span>`
                     : '';
 
-                tr.innerHTML = `
-                    <td class="px-6 py-4">
-                        <div class="font-mono text-base font-semibold text-emerald-400">${sig.id}</div>
-                    </td>
-                    <td class="px-4 py-4 text-center">
+                let titleHTML = '';
+                if (sig.image_title && sig.audio_title && sig.image_title !== sig.audio_title) {
+                    titleHTML = `
+                        <div class="text-sm font-medium leading-tight">${sig.image_title}</div>
+                        <div class="text-[10px] text-zinc-500 mt-0.5">${sig.audio_title}</div>
+                    `;
+                } else {
+                    const mainTitle = sig.image_title || sig.audio_title || '제목 없음';
+                    titleHTML = `<div class="text-sm font-medium leading-tight">${mainTitle}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="p-3 pb-2 text-center border-b border-zinc-800 bg-black/30">
+                        <div class="text-3xl font-bold tracking-[-1px] text-white/90 sig-id">${sig.id}</div>
+                    </div>
+
+                    <div class="bg-black flex items-center justify-center p-2" style="min-height: 110px;">
                         ${hasImage ? `
                             <img src="images/${sig.image_name}" 
-                                 class="max-w-[64px] max-h-[40px] object-contain rounded border border-zinc-700 cursor-pointer hover:opacity-80 mx-auto" 
-                                 onclick="event.stopImmediatePropagation(); showImage(${sig.id})" 
+                                 class="max-h-[110px] w-auto object-contain cursor-pointer transition-transform hover:scale-[1.02]" 
+                                 onclick="showImage(${sig.id})" 
                                  loading="lazy" 
                                  alt="${sig.image_title || ''}">
-                        ` : '<span class="text-zinc-500 text-xs">—</span>'}
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center justify-center gap-2">
-                            ${hasAudio ? `
-                                <button onclick="playAudio(${sig.id}, this)" 
-                                        class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-2xl bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-medium">
-                                    <i class="fa-solid fa-play"></i>
-                                    <span>재생</span>
-                                </button>
-                                <a href="${sig.audio_path}" download 
-                                   class="flex items-center gap-1 px-2 py-1 text-xs rounded bg-zinc-800 hover:bg-zinc-700 transition-colors"
-                                   title="다운로드">
-                                    <i class="fa-solid fa-download"></i>
-                                </a>
-                            ` : ''}
+                        ` : `
+                            <div class="text-zinc-600 text-xs text-center py-6">이미지 없음</div>
+                        `}
+                    </div>
+
+                    <div class="p-3 flex-1 flex flex-col">
+                        <div class="text-center mb-2">
+                            ${titleHTML}
                         </div>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        ${periodBadge}
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-sm">${sig.audio_title || '<span class="text-zinc-500">—</span>'}</div>
-                        ${sig.primary_audio_name ? `<div class="text-[10px] text-zinc-400 truncate max-w-[160px]">${sig.primary_audio_name}</div>` : ''}
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium text-sm">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
-                    </td>
+
+                        <div class="mt-auto flex items-center justify-between text-[10px]">
+                            <div>${periodBadge}</div>
+
+                            <div class="flex items-center gap-1.5">
+                                ${hasAudio ? `
+                                    <button onclick="playAudio(${sig.id}, this)" 
+                                            class="flex items-center gap-1 px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] transition-colors">
+                                        <i class="fa-solid fa-play text-[9px]"></i>
+                                        <span>재생</span>
+                                    </button>
+                                    <a href="${sig.audio_path}" download 
+                                       class="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] transition-colors"
+                                       title="시그음원 다운로드">
+                                        <i class="fa-solid fa-download text-[9px]"></i>
+                                    </a>
+                                ` : '<span class="text-zinc-600">음원 없음</span>'}
+                            </div>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+
+                gallery.appendChild(card);
             });
 
             document.getElementById('result-count').textContent = `${filteredSigs.length} / ${sigs.length}`;
@@ -299,14 +302,14 @@
             filtered.sort((a, b) => b.id - a.id);
 
             currentFilteredSigs = filtered;
-            renderTable(filtered);
+            renderGallery(filtered);
         }
 
         function resetFilters() {
             document.getElementById('search').value = '';
             document.getElementById('period-filter').value = '';
             currentFilteredSigs = sigs;
-            renderTable(sigs);
+            renderGallery(sigs);
         }
 
         function downloadExcel() {
