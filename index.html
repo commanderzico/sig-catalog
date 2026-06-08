@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시그 통합 카탈로그 • 26.06.02</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&amp;display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', system-ui, sans-serif;
+        }
+        
+        .sig-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .sig-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        
+        .modal {
+            animation: fadeInScale 0.2s ease-out forwards;
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .sig-id {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-feature-settings: "tnum";
+        }
+        
+        .audio-player {
+            transition: all 0.2s ease;
+        }
+        
+        .sig-table th {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+        
+        .preview-img {
+            max-height: 420px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-200">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">시그 통합 카탈로그</h1>
+                <p class="text-zinc-400 mt-1">시그 단가 기준 • 음원 + 이미지 • 26.06.02</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="px-4 py-2 bg-zinc-900 rounded-2xl text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-database text-emerald-400"></i>
+                    <span id="total-count">0</span> 개의 시그
+                </div>
+                <a href="https://github.com" target="_blank" 
+                   class="flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-2xl text-sm">
+                    <i class="fa-brands fa-github"></i>
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-col md:flex-row gap-3 mb-6">
+            <div class="flex-1 relative">
+                <input id="search" 
+                       type="text" 
+                       placeholder="시그 단가 또는 제목 검색..." 
+                       class="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 transition-colors pl-11 py-3 rounded-3xl text-sm outline-none">
+                <i class="fa-solid fa-search absolute left-4 top-4 text-zinc-500"></i>
+            </div>
+            
+            <div class="flex gap-2">
+                <select id="period-filter" 
+                        class="bg-zinc-900 border border-zinc-800 px-4 py-3 rounded-3xl text-sm outline-none">
+                    <option value="">모든 시기</option>
+                    <option value="기존">기존</option>
+                    <option value="5월~6월">5~6월 (뉴시그)</option>
+                </select>
+                
+                <button onclick="resetFilters()" 
+                        class="px-5 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-3xl text-sm flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-undo text-xs"></i>
+                    <span>초기화</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-zinc-950 text-zinc-400">
+                        <tr>
+                            <th class="px-6 py-4 text-left font-medium w-20">단가</th>
+                            <th class="px-6 py-4 text-left font-medium">음원 제목</th>
+                            <th class="px-6 py-4 text-left font-medium">이미지 제목</th>
+                            <th class="px-6 py-4 text-center font-medium w-28">시기</th>
+                            <th class="px-6 py-4 text-center font-medium w-40">액션</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-zinc-800">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-4 text-xs text-zinc-500 flex justify-between items-center px-1">
+            <div>GitHub Pages로 호스팅됨 • 데이터는 JSON 기반</div>
+            <div id="result-count" class="font-mono"></div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="image-modal" onclick="closeImageModal()" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 rounded-3xl max-w-2xl w-full overflow-hidden border border-zinc-700">
+            <div class="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+                <div>
+                    <div id="modal-id" class="font-mono text-emerald-400 text-sm"></div>
+                    <div id="modal-title" class="font-semibold text-lg"></div>
+                </div>
+                <button onclick="closeImageModal()" class="text-zinc-400 hover:text-white px-3 py-1">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 flex justify-center bg-black/30">
+                <img id="modal-image" class="preview-img max-h-[420px] rounded-xl shadow-2xl" alt="시그 이미지">
+            </div>
+            <div class="px-5 py-4 bg-zinc-950 text-xs text-zinc-400 flex items-center justify-between">
+                <div id="modal-meta"></div>
+                <a id="modal-download" href="#" download class="flex items-center gap-1.5 hover:text-white transition-colors">
+                    <i class="fa-solid fa-download"></i>
+                    <span>다운로드</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Player (floating) -->
+    <div id="audio-player" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-700 shadow-2xl rounded-3xl px-5 py-3 flex items-center gap-4 z-50 min-w-[320px]">
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+            <button id="play-btn" onclick="toggleAudio()" 
+                    class="w-10 h-10 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 transition-colors text-white rounded-2xl">
+                <i class="fa-solid fa-play" id="play-icon"></i>
+            </button>
+            
+            <div class="flex-1 min-w-0">
+                <div id="audio-title" class="font-medium text-sm truncate"></div>
+                <div id="audio-id" class="text-[10px] text-zinc-500 font-mono"></div>
+            </div>
+        </div>
+        
+        <button onclick="stopAudio()" class="text-zinc-400 hover:text-white px-2">
+            <i class="fa-solid fa-stop text-sm"></i>
+        </button>
+    </div>
+
+    <script>
+        let sigs = [];
+        let currentAudio = null;
+        let currentAudioBtn = null;
+
+        async function loadData() {
+            try {
+                const res = await fetch('data/sigs.json');
+                sigs = await res.json();
+                
+                // Filter out completely empty entries
+                sigs = sigs.filter(s => s.audio_title || s.image_title);
+                
+                renderTable(sigs);
+                document.getElementById('total-count').textContent = sigs.length.toLocaleString();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('table-body').innerHTML = `
+                    <tr><td colspan="5" class="px-6 py-12 text-center text-red-400">
+                        데이터를 불러오지 못했습니다. data/sigs.json 파일이 올바른 위치에 있는지 확인하세요.
+                    </td></tr>
+                `;
+            }
+        }
+
+        function renderTable(filteredSigs) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (filteredSigs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-zinc-500">검색 결과가 없습니다.</td></tr>`;
+                return;
+            }
+
+            filteredSigs.forEach(sig => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-zinc-800/60 transition-colors';
+
+                const hasAudio = sig.primary_audio_name && sig.audio_path;
+                const hasImage = sig.image_name;
+
+                const periodBadge = sig.period 
+                    ? `<span class="inline-flex items-center px-2.5 py-px rounded-full text-[10px] font-medium ${sig.period.includes('5월') || sig.period.includes('6월') ? 'bg-orange-500/20 text-orange-400' : 'bg-zinc-700 text-zinc-300'}">${sig.period}</span>`
+                    : '';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="font-mono text-base font-semibold text-emerald-400">${sig.id}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium">${sig.audio_title || '<span class="text-zinc-500">—</span>'}</div>
+                        ${sig.primary_audio_name ? `<div class="text-[10px] text-zinc-400 truncate max-w-[210px]">${sig.primary_audio_name}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium">${sig.image_title || '<span class="text-zinc-500">—</span>'}</div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        ${periodBadge}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            ${hasImage ? `
+                                <button onclick="showImage(${sig.id})" 
+                                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors">
+                                    <i class="fa-solid fa-image"></i>
+                                    <span>이미지</span>
+                                </button>
+                            ` : ''}
+
+                            ${hasAudio ? `
+                                <button onclick="playAudio(${sig.id}, this)" 
+                                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-2xl bg-emerald-600 hover:bg-emerald-500 transition-colors text-white">
+                                    <i class="fa-solid fa-play"></i>
+                                    <span>재생</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('result-count').textContent = `${filteredSigs.length} / ${sigs.length}`;
+        }
+
+        function filterData() {
+            const searchTerm = document.getElementById('search').value.toLowerCase().trim();
+            const periodFilter = document.getElementById('period-filter').value;
+
+            let filtered = sigs;
+
+            if (searchTerm) {
+                filtered = filtered.filter(s => 
+                    String(s.id).includes(searchTerm) ||
+                    (s.audio_title && s.audio_title.toLowerCase().includes(searchTerm)) ||
+                    (s.image_title && s.image_title.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            if (periodFilter) {
+                filtered = filtered.filter(s => s.period && s.period.includes(periodFilter));
+            }
+
+            renderTable(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('search').value = '';
+            document.getElementById('period-filter').value = '';
+            renderTable(sigs);
+        }
+
+        // Image Modal
+        let currentImageId = null;
+
+        function showImage(id) {
+            const sig = sigs.find(s => s.id === id);
+            if (!sig || !sig.image_name) return;
+
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('modal-image');
+
+            document.getElementById('modal-id').textContent = sig.id;
+            document.getElementById('modal-title').textContent = sig.image_title || '시그 이미지';
+            document.getElementById('modal-meta').innerHTML = `
+                ${sig.image_period ? `<span class="mr-3">${sig.image_period}</span>` : ''}
+                <span class="font-mono">${sig.image_name}</span>
+            `;
+
+            img.src = `images/${sig.image_name}`;
+            img.alt = sig.image_title || `시그 ${sig.id}`;
+
+            const downloadLink = document.getElementById('modal-download');
+            downloadLink.href = `images/${sig.image_name}`;
+            downloadLink.download = sig.image_name;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('image-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            // optional: revoke object url if needed, but not here
+        }
+
+        // Audio Playback
+        function playAudio(id, buttonElement) {
+            const sig = sigs.find(s => s.id === id);
+            if (!sig || !sig.audio_path) return;
+
+            const audioPlayer = document.getElementById('audio-player');
+            const titleEl = document.getElementById('audio-title');
+            const idEl = document.getElementById('audio-id');
+            const icon = document.getElementById('play-icon');
+
+            // Stop previous
+            if (currentAudio) {
+                currentAudio.pause();
+                if (currentAudioBtn) {
+                    currentAudioBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>재생</span>`;
+                }
+            }
+
+            currentAudio = new Audio(`${sig.audio_path}`);
+            currentAudioBtn = buttonElement;
+
+            titleEl.textContent = sig.audio_title || sig.primary_audio_name;
+            idEl.textContent = `#${sig.id}`;
+
+            audioPlayer.classList.remove('hidden');
+            audioPlayer.classList.add('flex');
+
+            currentAudio.play().then(() => {
+                buttonElement.innerHTML = `<i class="fa-solid fa-pause"></i> <span>일시정지</span>`;
+                icon.classList.remove('fa-play');
+                icon.classList.add('fa-pause');
+            }).catch(err => {
+                console.error("Audio play failed:", err);
+                alert("오디오 재생에 실패했습니다. 파일이 올바른 위치에 있는지 확인하세요.");
+            });
+
+            currentAudio.onended = () => {
+                buttonElement.innerHTML = `<i class="fa-solid fa-play"></i> <span>재생</span>`;
+                icon.classList.remove('fa-pause');
+                icon.classList.add('fa-play');
+                audioPlayer.classList.remove('flex');
+                audioPlayer.classList.add('hidden');
+                currentAudio = null;
+                currentAudioBtn = null;
+            };
+
+            // Toggle on same button
+            buttonElement.onclick = (e) => {
+                e.stopImmediatePropagation();
+                if (!currentAudio) return;
+                
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    buttonElement.innerHTML = `<i class="fa-solid fa-pause"></i> <span>일시정지</span>`;
+                    icon.classList.remove('fa-play');
+                    icon.classList.add('fa-pause');
+                } else {
+                    currentAudio.pause();
+                    buttonElement.innerHTML = `<i class="fa-solid fa-play"></i> <span>재생</span>`;
+                    icon.classList.remove('fa-pause');
+                    icon.classList.add('fa-play');
+                }
+            };
+        }
+
+        function stopAudio() {
+            const audioPlayer = document.getElementById('audio-player');
+            const icon = document.getElementById('play-icon');
+
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if (currentAudioBtn) {
+                currentAudioBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>재생</span>`;
+                currentAudioBtn = null;
+            }
+
+            audioPlayer.classList.remove('flex');
+            audioPlayer.classList.add('hidden');
+            icon.classList.remove('fa-pause');
+            icon.classList.add('fa-play');
+        }
+
+        // Event listeners
+        function setupEvents() {
+            const search = document.getElementById('search');
+            const period = document.getElementById('period-filter');
+
+            search.addEventListener('input', filterData);
+            period.addEventListener('change', filterData);
+
+            // Keyboard support
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+                    e.preventDefault();
+                    document.getElementById('search').focus();
+                }
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('image-modal');
+                    if (!modal.classList.contains('hidden')) {
+                        closeImageModal();
+                    } else {
+                        stopAudio();
+                    }
+                }
+            });
+
+            // Initial load
+            loadData().then(() => {
+                // Optional: auto filter to show only ones with both audio and image
+                // renderTable(sigs.filter(s => s.primary_audio_name && s.image_name));
+            });
+        }
+
+        // Boot
+        window.onload = function() {
+            setupEvents();
+            
+            // Easter egg / tip
+            console.log('%c[시그 카탈로그] GitHub Pages에서 호스팅 중입니다. 오디오/이미지 파일 경로를 확인하세요.', 'color:#52525b');
+        }
+    </script>
+</body>
+</html>
