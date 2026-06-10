@@ -221,10 +221,13 @@
         let currentAudio = null;
         let currentAudioBtn = null;
 
-        // === R2 Configuration ===
-        // Replace with your Cloudflare R2 public domain (make bucket public or use a Worker)
+        // === R2 Configuration (Cloudflare R2 for images and audio) ===
+        // 1. Create R2 bucket in Cloudflare Dashboard (e.g. "sig-catalog-media")
+        // 2. Make the bucket Public (or use a Worker proxy for more control)
+        // 3. Copy the Public URL (e.g. https://pub-xxxxx.r2.dev or your custom domain)
+        // 4. Replace below with your actual URL (no trailing slash)
         const R2_BASE = 'https://sig-catalog-media.YOUR-ACCOUNT-ID.r2.dev';
-        // Example: 'https://pub-xxx.r2.dev' or custom domain 'https://media.yourdomain.com'
+        // After setting, commit and push. Media will be served from Cloudflare R2.
 
         async function loadData() {
             try {
