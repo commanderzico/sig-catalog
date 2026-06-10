@@ -131,6 +131,12 @@
                     <i class="fa-solid fa-file-excel"></i>
                     <span>엑셀 다운로드</span>
                 </button>
+
+                <button onclick="showUploadModal()" 
+                        class="px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-3xl text-sm flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-upload"></i>
+                    <span>새 미디어 업로드</span>
+                </button>
             </div>
         </div>
 
@@ -165,7 +171,7 @@
         </div>
 
         <div class="mt-4 text-xs text-zinc-500 flex justify-between items-center px-1">
-            <div>GitHub Pages로 호스팅됨 • 데이터는 JSON 기반</div>
+            <div>Cloudflare Pages + R2로 호스팅됨 • 데이터는 JSON 기반</div>
             <div id="result-count" class="font-mono"></div>
         </div>
     </div>
@@ -214,6 +220,94 @@
         </button>
     </div>
 
+    <!-- Upload Modal -->
+    <div id="upload-modal" onclick="closeUploadModal()" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="bg-zinc-900 border border-zinc-700 rounded-3xl w-full max-w-lg overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-upload text-violet-400"></i>
+                    <span class="font-semibold">새 미디어 업로드</span>
+                </div>
+                <button onclick="closeUploadModal()" class="text-zinc-400 hover:text-white px-2 text-xl leading-none">&times;</button>
+            </div>
+
+            <div class="p-6 space-y-4 text-sm">
+                <!-- Auth -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-zinc-400 text-xs mb-1">아이디</label>
+                        <input id="upload-username" type="text" value="admin" 
+                               class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 text-sm focus:border-violet-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-400 text-xs mb-1">비밀번호</label>
+                        <input id="upload-password" type="password" 
+                               class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 text-sm focus:border-violet-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="border-t border-zinc-800 pt-4 space-y-4">
+                    <!-- Metadata -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-zinc-400 text-xs mb-1">단가 (ID) <span class="text-red-400">*</span></label>
+                            <input id="upload-id" type="number" placeholder="예: 12345" 
+                                   class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 text-sm focus:border-violet-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-zinc-400 text-xs mb-1">기간</label>
+                            <input id="upload-period" type="text" placeholder="7월 또는 기존" value="7월"
+                                   class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 text-sm focus:border-violet-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-zinc-400 text-xs mb-1">이미지 제목 <span class="text-red-400">*</span></label>
+                        <input id="upload-image-title" type="text" placeholder="예: 여름시그" 
+                               class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 text-sm focus:border-violet-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-zinc-400 text-xs mb-1">음원 제목 (없으면 비워도 됨)</label>
+                        <input id="upload-audio-title" type="text" placeholder="예: 여름시그 (고음질)" 
+                               class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 text-sm focus:border-violet-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-zinc-400 text-xs mb-1">오디오 폴더명 (R2 경로) <span class="text-red-400">*</span></label>
+                        <input id="upload-audio-folder" type="text" placeholder="7.10 뉴시그" value="7.10 뉴시그"
+                               class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 text-sm focus:border-violet-500 outline-none">
+                        <div class="text-[10px] text-zinc-500 mt-0.5">이 폴더명으로 audio/ 아래에 저장됩니다.</div>
+                    </div>
+
+                    <!-- Files -->
+                    <div class="grid grid-cols-1 gap-4 pt-2">
+                        <div>
+                            <label class="block text-zinc-400 text-xs mb-1">이미지 파일 <span class="text-red-400">*</span></label>
+                            <input id="upload-image" type="file" accept="image/*" 
+                                   class="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-2xl file:border-0 file:bg-zinc-800 file:text-white hover:file:bg-zinc-700">
+                        </div>
+                        <div>
+                            <label class="block text-zinc-400 text-xs mb-1">음원 파일 (mp3)</label>
+                            <input id="upload-audio" type="file" accept="audio/mpeg,audio/mp3" 
+                                   class="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-2xl file:border-0 file:bg-zinc-800 file:text-white hover:file:bg-zinc-700">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="upload-status" class="text-xs min-h-[20px] text-center"></div>
+            </div>
+
+            <div class="px-6 py-4 bg-zinc-950 border-t border-zinc-800 flex gap-3">
+                <button onclick="closeUploadModal()" 
+                        class="flex-1 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-sm">취소</button>
+                <button onclick="submitUpload()" 
+                        class="flex-1 py-3 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium">업로드하기</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let sigs = [];
         let currentFilteredSigs = [];
@@ -226,12 +320,18 @@
         // 2. Make the bucket Public (or use a Worker proxy for more control)
         // 3. Copy the Public URL (e.g. https://pub-xxxxx.r2.dev or your custom domain)
         // 4. Replace below with your actual URL (no trailing slash)
-        const R2_BASE = 'https://sig-catalog-media.YOUR-ACCOUNT-ID.r2.dev';
+        const R2_BASE = 'https://pub-170513b000de4e5f8fed645466a5276f.r2.dev';
+        // Upload Worker endpoint (배포 후 실제 주소로 바꿔주세요)
+        const UPLOAD_API = 'https://sig-catalog-upload.gaetongsoo.workers.dev';
         // After setting, commit and push. Media will be served from Cloudflare R2.
 
         async function loadData() {
             try {
-                const res = await fetch('data/sigs.json');
+                // Prefer the live version from R2 (updated by upload Worker), fallback to local static file
+                let res = await fetch(`${R2_BASE}/data/sigs.json`);
+                if (!res.ok) {
+                    res = await fetch('data/sigs.json');
+                }
                 sigs = await res.json();
                 
                 // Filter out completely empty entries
@@ -489,6 +589,104 @@
             XLSX.writeFile(wb, filename);
         }
 
+        // ===== Upload (for multiple people with ID/PW) =====
+        let uploadModalOpen = false;
+
+        function showUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('upload-status').textContent = '';
+            // focus password if username is prefilled
+            setTimeout(() => {
+                document.getElementById('upload-password').focus();
+            }, 100);
+        }
+
+        function closeUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        async function submitUpload() {
+            const statusEl = document.getElementById('upload-status');
+            statusEl.textContent = '업로드 중...';
+            statusEl.className = 'text-xs min-h-[20px] text-center text-violet-400';
+
+            const username = document.getElementById('upload-username').value.trim();
+            const password = document.getElementById('upload-password').value;
+            const id = parseInt(document.getElementById('upload-id').value);
+            const imageTitle = document.getElementById('upload-image-title').value.trim();
+            const audioTitle = document.getElementById('upload-audio-title').value.trim();
+            const period = document.getElementById('upload-period').value.trim();
+            const audioFolder = document.getElementById('upload-audio-folder').value.trim() || '기타';
+
+            const imageInput = document.getElementById('upload-image');
+            const audioInput = document.getElementById('upload-audio');
+
+            if (!username || !password) {
+                statusEl.textContent = '아이디와 비밀번호를 입력해주세요.';
+                statusEl.className = 'text-xs min-h-[20px] text-center text-red-400';
+                return;
+            }
+            if (!id || !imageTitle || !imageInput.files[0]) {
+                statusEl.textContent = '단가, 이미지 제목, 이미지 파일은 필수입니다.';
+                statusEl.className = 'text-xs min-h-[20px] text-center text-red-400';
+                return;
+            }
+            if (!audioFolder) {
+                statusEl.textContent = '오디오 폴더명을 입력해주세요 (예: 7.10 뉴시그)';
+                statusEl.className = 'text-xs min-h-[20px] text-center text-red-400';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            formData.append('id', id);
+            formData.append('image_title', imageTitle);
+            formData.append('audio_title', audioTitle);
+            formData.append('period', period);
+            formData.append('audio_folder', audioFolder);
+
+            if (imageInput.files[0]) formData.append('image', imageInput.files[0]);
+            if (audioInput.files[0]) formData.append('audio', audioInput.files[0]);
+
+            try {
+                const res = await fetch(UPLOAD_API + '/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || '업로드 실패');
+                }
+
+                statusEl.textContent = '✅ 업로드 성공! 목록을 새로고침합니다...';
+                statusEl.className = 'text-xs min-h-[20px] text-center text-emerald-400';
+
+                // Refresh data from R2 (live)
+                await loadData();
+                setView(currentView);
+
+                setTimeout(() => {
+                    closeUploadModal();
+                    // Clear form for next time
+                    imageInput.value = '';
+                    audioInput.value = '';
+                    document.getElementById('upload-password').value = '';
+                }, 1200);
+
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = '실패: ' + (err.message || '서버 오류');
+                statusEl.className = 'text-xs min-h-[20px] text-center text-red-400';
+            }
+        }
+
         // Image Modal
         let currentImageId = null;
 
@@ -646,7 +844,7 @@
             setupEvents();
             
             // Easter egg / tip
-            console.log('%c[시그 카탈로그] GitHub Pages에서 호스팅 중입니다. 오디오/이미지 파일 경로를 확인하세요.', 'color:#52525b');
+            console.log('%c[시그 카탈로그] Cloudflare R2 + Pages + Upload Worker', 'color:#52525b');
         }
     </script>
 </body>

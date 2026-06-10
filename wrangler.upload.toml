@@ -1,0 +1,15 @@
+# Configuration for the Sig Catalog Upload Worker
+# This Worker handles authenticated uploads of new images + audio to R2
+# and updates data/sigs.json in R2.
+
+name = "sig-catalog-upload"
+main = "upload-worker.js"
+compatibility_date = "2025-06-10"
+
+# R2 binding - this makes env.MEDIA available in the Worker code
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "sig-catalog-media"
+# preview_bucket_name = "sig-catalog-media"   # optional, if you want a separate preview bucket
+
+# You can add more bindings later if needed (e.g. KV for users, D1, etc.)
