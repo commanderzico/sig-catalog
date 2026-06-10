@@ -13,6 +13,14 @@ node_modules
 dist
 build
 
-# Large binary packs if they sneak in
-*.pack
-*.idx
+# Media - now on R2, do not deploy to Pages
+images/
+1000~9999/
+10000~50000/
+5.* 뉴시그*
+6.* 뉴시그*
+*.mp3
+*.png
+*.gif
+*.jpg
+*.jpeg
