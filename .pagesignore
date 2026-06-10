@@ -1,5 +1,18 @@
+# Ignore git internals and large unnecessary files
 .git
 .gitignore
+.gitattributes
+
+# OS / editor junk
 .DS_Store
+Thumbs.db
 *.log
+
+# Build / node (if any)
 node_modules
+dist
+build
+
+# Large binary packs if they sneak in
+*.pack
+*.idx

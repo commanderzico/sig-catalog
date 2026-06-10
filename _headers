@@ -1,0 +1,11 @@
+# Cache everything aggressively for static assets (images, audio, data)
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+/data/*
+  Cache-Control: public, max-age=3600
+/*.(mp3|png|gif|jpg|jpeg)
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML should revalidate more often
+/*
+  Cache-Control: public, max-age=0, must-revalidate
