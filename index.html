@@ -221,6 +221,11 @@
         let currentAudio = null;
         let currentAudioBtn = null;
 
+        // === R2 Configuration ===
+        // Replace with your Cloudflare R2 public domain (make bucket public or use a Worker)
+        const R2_BASE = 'https://sig-catalog-media.YOUR-ACCOUNT-ID.r2.dev';
+        // Example: 'https://pub-xxx.r2.dev' or custom domain 'https://media.yourdomain.com'
+
         async function loadData() {
             try {
                 const res = await fetch('data/sigs.json');
@@ -283,7 +288,7 @@
 
                     <div class="bg-black flex items-center justify-center p-2" style="min-height: 110px;">
                         ${hasImage ? `
-                            <img src="images/${sig.image_name}" 
+                            <img src="${R2_BASE}/images/${sig.image_name}" 
                                  class="max-h-[110px] w-auto object-contain cursor-pointer transition-transform hover:scale-[1.02]" 
                                  onclick="showImage(${sig.id})" 
                                  loading="lazy" 
@@ -308,7 +313,7 @@
                                         <i class="fa-solid fa-play text-[9px]"></i>
                                         <span>재생</span>
                                     </button>
-                                    <a href="${sig.audio_path}" download 
+                                    <a href="${R2_BASE}/audio/${sig.audio_path}" download 
                                        class="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] transition-colors"
                                        title="시그음원 다운로드">
                                         <i class="fa-solid fa-download text-[9px]"></i>
@@ -351,7 +356,7 @@
                     </td>
                     <td class="px-3 py-3 text-center">
                         ${hasImage ? `
-                            <img src="images/${sig.image_name}" 
+                            <img src="${R2_BASE}/images/${sig.image_name}" 
                                  class="w-10 h-7 object-contain rounded border border-zinc-700 cursor-pointer hover:opacity-80 mx-auto" 
                                  onclick="showImage(${sig.id})" 
                                  loading="lazy" 
@@ -366,7 +371,7 @@
                                     <i class="fa-solid fa-play text-[8px]"></i>
                                     <span>재생</span>
                                 </button>
-                                <a href="${sig.audio_path}" download 
+                                <a href="${R2_BASE}/audio/${sig.audio_path}" download 
                                    class="flex items-center gap-1 px-1.5 py-1 text-[10px] rounded bg-zinc-800 hover:bg-zinc-700 transition-colors"
                                    title="다운로드">
                                     <i class="fa-solid fa-download text-[8px]"></i>
@@ -469,8 +474,8 @@
                 '생성 시기': sig.period || '',
                 '음원 파일명': sig.primary_audio_name || '',
                 '이미지 파일명': sig.image_name || '',
-                '음원 파일 경로': sig.audio_path || '',
-                '이미지 파일 경로': sig.image_name ? `images/${sig.image_name}` : ''
+                '음원 파일 경로': sig.audio_path ? `${R2_BASE}/audio/${sig.audio_path}` : '',
+                '이미지 파일 경로': sig.image_name ? `${R2_BASE}/images/${sig.image_name}` : ''
             }));
 
             const ws = XLSX.utils.json_to_sheet(excelData);
@@ -498,11 +503,11 @@
                 <span class="font-mono">${sig.image_name}</span>
             `;
 
-            img.src = `images/${sig.image_name}`;
+            img.src = `${R2_BASE}/images/${sig.image_name}`;
             img.alt = sig.image_title || `시그 ${sig.id}`;
 
             const downloadLink = document.getElementById('modal-download');
-            downloadLink.href = `images/${sig.image_name}`;
+            downloadLink.href = `${R2_BASE}/images/${sig.image_name}`;
             downloadLink.download = sig.image_name;
 
             modal.classList.remove('hidden');
@@ -534,9 +539,8 @@
                 }
             }
 
-            const repo = 'sig-catalog';
-            // Use GitHub Pages URL + encodeURI for reliable audio serving (raw.githubusercontent can be flaky with Korean filenames)
-            const audioUrl = `https://commanderzico.github.io/${repo}/${encodeURI(sig.audio_path)}`;
+            // Use R2 for stable, fast delivery (recommended for media with many concurrent users)
+            const audioUrl = `${R2_BASE}/audio/${encodeURI(sig.audio_path)}`;
             currentAudio = new Audio(audioUrl);
             currentAudioBtn = buttonElement;
 
